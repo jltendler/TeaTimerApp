@@ -1,0 +1,37 @@
+# Gradle artifacts
+.gradle/
+build/
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+local.properties
+.navigation/
+
+# Built variants
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Keystore files (NEVER commit these)
+*.jks
+*.keystore
+
+# External native build folder
+.externalNativeBuild
+.cxx/
+
+# Google Services
+google-services.json
+
+# Logs
+captures/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*.temp

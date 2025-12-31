@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="purple_200">#FFBB86FC</color>
+    <color name="purple_500">#FF6200EE</color>
+    <color name="purple_700">#FF3700B3</color>
+    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_700">#FF018786</color>
+    <color name="gray_light">#EEEEEE</color>
+    <color name="timer_bg">#F0F0F0</color>
+    
+    <!-- Timer Colors -->
+    <color name="timer_1">#4812a1</color>
+    <color name="timer_2">#b70089</color>
+    <color name="timer_3">#f12568</color>
+    <color name="timer_4">#ff754c</color>
+    <color name="timer_5">#ffba47</color>
+    <color name="timer_6">#039590</color>
+</resources>
