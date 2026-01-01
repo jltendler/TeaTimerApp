@@ -56,12 +56,12 @@ public class ThemeHelper {
 
     // 5: Zen (Greyscale)
     private static final int[] ZEN_COLORS = {
-            Color.parseColor("#212121"), // Nearly Black
-            Color.parseColor("#424242"), // Dark Grey
+            Color.parseColor("#000000"), // Black
             Color.parseColor("#616161"), // Grey
-            Color.parseColor("#757575"), // Grey
+            Color.parseColor("#808080"), // Grey
             Color.parseColor("#9e9e9e"), // Light Grey
-            Color.parseColor("#bdbdbd")  // Lighter Grey
+            Color.parseColor("#bdbdbd"), // Lighter Grey
+            Color.parseColor("#e0e0e0")  // Very Light Grey
     };
 
     public static int getColor(int themeIndex, int timerIndex) {
