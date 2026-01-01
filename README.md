@@ -30,3 +30,15 @@ A timer that has precisely what I wanted out of a tea brewing timer app. I set i
 2. Open the project in **Android Studio**.
 3. **Sync Project with Gradle Files**.
 4. Run on a physical device or emulator.
+
+## Preview
+
+<p align="center">
+  <img src="preview/Screenshot_20251231_181641.png" width="300" alt="Timer Screen" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="preview/Screenshot_20251231_181633.png" width="300" alt="Settings Screen" />
+</p>
+
+<p align="center">
+  <i>The main timer grid (Berry theme) and the settings page.</i>
+</p>
