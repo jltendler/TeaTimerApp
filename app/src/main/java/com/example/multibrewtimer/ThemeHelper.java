@@ -6,9 +6,9 @@ public class ThemeHelper {
 
     // 0: Original
     private static final int[] ORIGINAL_COLORS = {
-            Color.parseColor("#4812a1"),
+            Color.parseColor("#9057ec"),
             Color.parseColor("#b70089"),
-            Color.parseColor("#f12568"), // nice pink
+            Color.parseColor("#f12568"),
             Color.parseColor("#ff754c"),
             Color.parseColor("#ffba47"),
             Color.parseColor("#039590")

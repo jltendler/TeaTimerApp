@@ -59,6 +59,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         EditText etTimeInput;
         Spinner spinnerUnit;
         Button btnStartStop, btnPause, btnResume, btnReset;
+        Button btnMinusRunning, btnPlusRunning;
         TextView tvCountdown;
         CircleTimerView circleVisualizer;
         LinearLayout inputContainer, runningContainer;
@@ -74,6 +75,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             btnPause = itemView.findViewById(R.id.btnPause);
             btnResume = itemView.findViewById(R.id.btnResume);
             btnReset = itemView.findViewById(R.id.btnReset);
+
+            btnMinusRunning = itemView.findViewById(R.id.btnMinusRunning);
+            btnPlusRunning = itemView.findViewById(R.id.btnPlusRunning);
 
             tvCountdown = itemView.findViewById(R.id.tvCountdown);
             circleVisualizer = itemView.findViewById(R.id.circleVisualizer);
@@ -100,6 +104,11 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             btnReset.setBackgroundTintList(csl);
             btnPlus.setBackgroundTintList(csl);
             btnMinus.setBackgroundTintList(csl);
+            btnPlusRunning.setBackgroundTintList(csl);
+            btnMinusRunning.setBackgroundTintList(csl);
+
+            tvCountdown.setTextColor(resolvedColor);
+            etTimeInput.setTextColor(resolvedColor);
 
             // Restore State
             if (timer.inputValue == null) {
@@ -174,6 +183,10 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             btnPause.setOnClickListener(v -> pauseTimer(timer));
             btnResume.setOnClickListener(v -> resumeTimer(timer));
             btnReset.setOnClickListener(v -> resetTimer(timer));
+
+            int adjustStep = prefs.getInt("pref_increment_step", 5);
+            btnPlusRunning.setOnClickListener(v -> adjustRemainingTime(timer, adjustStep));
+            btnMinusRunning.setOnClickListener(v -> adjustRemainingTime(timer, -adjustStep));
         }
 
         private void updateUI(TimerModel timer) {
@@ -188,6 +201,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 btnPause.setVisibility(View.GONE);
                 btnResume.setVisibility(View.GONE);
                 btnReset.setVisibility(View.VISIBLE); // Show Reset
+
+                btnPlusRunning.setVisibility(View.GONE);
+                btnMinusRunning.setVisibility(View.GONE);
                 
                 if (countDownTimer != null) countDownTimer.cancel();
 
@@ -199,6 +215,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 btnPause.setVisibility(View.VISIBLE); // Pause only
                 btnResume.setVisibility(View.GONE);
                 btnReset.setVisibility(View.GONE);
+
+                btnPlusRunning.setVisibility(View.VISIBLE);
+                btnMinusRunning.setVisibility(View.VISIBLE);
 
                 startTicker(timer);
 
@@ -214,6 +233,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 btnPause.setVisibility(View.GONE);
                 btnResume.setVisibility(View.VISIBLE); // Resume
                 btnReset.setVisibility(View.VISIBLE);  // Reset
+
+                btnPlusRunning.setVisibility(View.VISIBLE);
+                btnMinusRunning.setVisibility(View.VISIBLE);
 
                 if (countDownTimer != null) countDownTimer.cancel();
             } else {
@@ -315,6 +337,31 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
 
             if (MainActivity.isAppVisible) {
                 SoundHelper.playRingtone(itemView.getContext());
+            }
+
+            saveState(timer);
+            updateUI(timer);
+        }
+
+        private void adjustRemainingTime(TimerModel timer, int deltaSeconds) {
+            long deltaMillis = deltaSeconds * 1000L;
+            timer.remainingTime += deltaMillis;
+            if (timer.remainingTime < 1000) {
+                timer.remainingTime = 0;
+                finishTimer(timer);
+                return;
+            }
+
+            // Update totalTime if remaining exceeds it to keep circle visual sane-ish
+            if (timer.remainingTime > timer.totalTime) {
+                timer.totalTime = timer.remainingTime;
+            }
+
+            if (timer.isRunning) {
+                // Shift endTimeMillis forward/backward
+                timer.endTimeMillis = System.currentTimeMillis() + timer.remainingTime;
+                scheduleAlarm(timer);
+                // restartTicker occurs inside updateUI -> startTicker
             }
 
             saveState(timer);
