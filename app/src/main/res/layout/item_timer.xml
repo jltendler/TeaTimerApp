@@ -70,6 +70,7 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:textSize="16sp"
+                            android:layout_marginEnd="4dp"
                             app:cornerRadius="6dp" />
 
                         <EditText
@@ -79,10 +80,11 @@
                             android:inputType="number"
                             android:hint="90"
                             android:textAlignment="center"
-                            android:background="@android:color/transparent"
+                            android:background="@drawable/bg_input_field"
                             android:textSize="24sp"
                             android:textStyle="bold"
-                            android:padding="2dp"
+                            android:paddingVertical="2dp"
+                            android:paddingHorizontal="6dp"
                             android:minWidth="45dp"/>
 
                         <Button
@@ -94,6 +96,7 @@
                             android:insetTop="0dp"
                             android:insetBottom="0dp"
                             android:textSize="16sp"
+                            android:layout_marginStart="4dp"
                             app:cornerRadius="6dp" />
                     </LinearLayout>
 

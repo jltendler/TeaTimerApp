@@ -9,6 +9,7 @@
     <color name="teal_700">#FF018786</color>
     <color name="gray_light">#EEEEEE</color>
     <color name="timer_bg">#F0F0F0</color>
+    <color name="input_field_bg">#F3F3F3</color>
     
     <!-- Timer Colors -->
     <color name="timer_1">#4812a1</color>
