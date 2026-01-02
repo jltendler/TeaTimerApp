@@ -1,8 +1,6 @@
 package com.example.multibrewtimer;
 
 import android.os.CountDownTimer;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -14,7 +12,6 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.LinearLayout;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -27,14 +24,11 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
 
     private final List<TimerModel> timers;
 
-    private final ToneGenerator toneGen;
-
     public TimerAdapter() {
         this(6); // Default 6 timers
     }
 
     public TimerAdapter(int count) {
-        toneGen = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
         timers = new ArrayList<>();
         for (int i = 0; i < count; i++) {
             TimerModel model = new TimerModel();
@@ -64,7 +58,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
     class TimerViewHolder extends RecyclerView.ViewHolder {
         EditText etTimeInput;
         Spinner spinnerUnit;
-        Button btnStartStop, btnStopRunning;
+        Button btnStartStop, btnPause, btnResume, btnReset;
         TextView tvCountdown;
         CircleTimerView circleVisualizer;
         LinearLayout inputContainer, runningContainer;
@@ -76,7 +70,11 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             etTimeInput = itemView.findViewById(R.id.etTimeInput);
             spinnerUnit = itemView.findViewById(R.id.spinnerUnit);
             btnStartStop = itemView.findViewById(R.id.btnStartStop);
-            btnStopRunning = itemView.findViewById(R.id.btnStopRunning);
+            
+            btnPause = itemView.findViewById(R.id.btnPause);
+            btnResume = itemView.findViewById(R.id.btnResume);
+            btnReset = itemView.findViewById(R.id.btnReset);
+
             tvCountdown = itemView.findViewById(R.id.tvCountdown);
             circleVisualizer = itemView.findViewById(R.id.circleVisualizer);
             inputContainer = itemView.findViewById(R.id.inputContainer);
@@ -84,67 +82,68 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         }
 
         void bind(TimerModel timer) {
-            // Restore State from model/prefs
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
             
-            // Get Theme Color
+            // Theme Logic
             int themeIndex = prefs.getInt("pref_timer_theme", 0);
             int resolvedColor = ThemeHelper.getColor(themeIndex, timer.index % 6);
             
             circleVisualizer.setColor(resolvedColor);
             
-            // Consolidate definitions
             Button btnPlus = itemView.findViewById(R.id.btnPlus);
             Button btnMinus = itemView.findViewById(R.id.btnMinus);
             
-            // Tint all buttons with this color
             android.content.res.ColorStateList csl = android.content.res.ColorStateList.valueOf(resolvedColor);
             btnStartStop.setBackgroundTintList(csl);
-            btnStopRunning.setBackgroundTintList(csl);
+            btnPause.setBackgroundTintList(csl);
+            btnResume.setBackgroundTintList(csl);
+            btnReset.setBackgroundTintList(csl);
             btnPlus.setBackgroundTintList(csl);
             btnMinus.setBackgroundTintList(csl);
 
-
-            
+            // Restore State
             if (timer.inputValue == null) {
+                // Initial Load
                 String savedVal = prefs.getString("timer_" + timer.index + "_val", "");
                 if (savedVal.isEmpty()) {
-                    timer.inputValue = "90"; // Default 90
-                    timer.unitIndex = 0;     // Default Seconds
+                    timer.inputValue = "90";
+                    timer.unitIndex = 0;
                 } else {
                     timer.inputValue = savedVal;
                     timer.unitIndex = prefs.getInt("timer_" + timer.index + "_unit", 0);
                 }
                 
-                // Re-sync end time from persistent storage
                 timer.endTimeMillis = prefs.getLong("timer_" + timer.index + "_end_time", 0);
                 timer.totalTime = prefs.getLong("timer_" + timer.index + "_total_time", 0);
-                
-                if (timer.endTimeMillis > System.currentTimeMillis()) {
-                    timer.isRunning = true;
-                    timer.remainingTime = timer.endTimeMillis - System.currentTimeMillis();
+                timer.isPaused = prefs.getBoolean("timer_" + timer.index + "_is_paused", false);
+                timer.remainingTime = prefs.getLong("timer_" + timer.index + "_remaining", 0);
+
+                if (timer.isPaused) {
+                    // Paused State
+                    timer.isRunning = false;
+                    timer.isFinished = false;
                 } else if (timer.endTimeMillis > 0) {
-                    // It finished while we were gone
-                    timer.isRunning = false;
-                    timer.endTimeMillis = 0;
-                    prefs.edit().putLong("timer_" + timer.index + "_end_time", 0).apply();
+                    if (timer.endTimeMillis > System.currentTimeMillis()) {
+                        // Running State
+                        timer.isRunning = true;
+                        timer.remainingTime = timer.endTimeMillis - System.currentTimeMillis();
+                        timer.isFinished = false;
+                    } else {
+                        // Finished while backgrounded
+                        timer.isRunning = false;
+                        timer.isFinished = true;
+                        timer.endTimeMillis = 0;
+                    }
                 } else {
+                    // Idle State
                     timer.isRunning = false;
+                    timer.isFinished = false;
                 }
             }
 
-            if (timer.isRunning) {
-                inputContainer.setVisibility(View.GONE);
-                runningContainer.setVisibility(View.VISIBLE);
-                startTicker(timer); // Resume visual updates
-            } else {
-                inputContainer.setVisibility(View.VISIBLE);
-                runningContainer.setVisibility(View.GONE);
-                circleVisualizer.setProgress(1.0f);
-                if(countDownTimer != null) countDownTimer.cancel();
-            }
+            updateUI(timer);
 
-            // Input Handling
+            // Input Listeners
             if (timer.inputValue != null) etTimeInput.setText(timer.inputValue);
             
             etTimeInput.addTextChangedListener(new TextWatcher() {
@@ -156,13 +155,10 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                  }
             });
             
-            // +/- Buttons
             int incrementStep = prefs.getInt("pref_increment_step", 5);
-            
             btnPlus.setOnClickListener(v -> adjustTime(timer, incrementStep));
             btnMinus.setOnClickListener(v -> adjustTime(timer, -incrementStep));
             
-            // Avoid triggering listener during initial setSelection
             spinnerUnit.setOnItemSelectedListener(null);
             spinnerUnit.setSelection(timer.unitIndex);
             spinnerUnit.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
@@ -173,17 +169,69 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 @Override public void onNothingSelected(AdapterView<?> parent) {}
             });
 
-            // Button Action
+            // Control Listeners
             btnStartStop.setOnClickListener(v -> startTimer(timer));
-            btnStopRunning.setOnClickListener(v -> stopTimer(timer, true));
+            btnPause.setOnClickListener(v -> pauseTimer(timer));
+            btnResume.setOnClickListener(v -> resumeTimer(timer));
+            btnReset.setOnClickListener(v -> resetTimer(timer));
         }
-        
+
+        private void updateUI(TimerModel timer) {
+            if (timer.isFinished) {
+                // FINISHED State
+                inputContainer.setVisibility(View.GONE);
+                runningContainer.setVisibility(View.VISIBLE);
+                
+                tvCountdown.setText("Done");
+                circleVisualizer.setProgress(0f);
+                
+                btnPause.setVisibility(View.GONE);
+                btnResume.setVisibility(View.GONE);
+                btnReset.setVisibility(View.VISIBLE); // Show Reset
+                
+                if (countDownTimer != null) countDownTimer.cancel();
+
+            } else if (timer.isRunning) {
+                // RUNNING State
+                inputContainer.setVisibility(View.GONE);
+                runningContainer.setVisibility(View.VISIBLE);
+                
+                btnPause.setVisibility(View.VISIBLE); // Pause only
+                btnResume.setVisibility(View.GONE);
+                btnReset.setVisibility(View.GONE);
+
+                startTicker(timer);
+
+            } else if (timer.isPaused) {
+                // PAUSED State
+                inputContainer.setVisibility(View.GONE);
+                runningContainer.setVisibility(View.VISIBLE);
+
+                UpdateTickerText(timer.remainingTime); // Static Update
+                float progress = (float) timer.remainingTime / timer.totalTime;
+                circleVisualizer.setProgress(progress);
+
+                btnPause.setVisibility(View.GONE);
+                btnResume.setVisibility(View.VISIBLE); // Resume
+                btnReset.setVisibility(View.VISIBLE);  // Reset
+
+                if (countDownTimer != null) countDownTimer.cancel();
+            } else {
+                // IDLE State
+                inputContainer.setVisibility(View.VISIBLE);
+                runningContainer.setVisibility(View.GONE);
+                circleVisualizer.setProgress(1.0f);
+                
+                if (countDownTimer != null) countDownTimer.cancel();
+            }
+        }
+
         private void adjustTime(TimerModel timer, int delta) {
             try {
                 int val = Integer.parseInt(etTimeInput.getText().toString());
                 val += delta;
-                if(val < 1) val = 1; // Min 1
-                etTimeInput.setText(String.valueOf(val)); // This triggers text watcher -> saves pref
+                if(val < 1) val = 1;
+                etTimeInput.setText(String.valueOf(val));
             } catch (NumberFormatException e) {
                 etTimeInput.setText("90");
             }
@@ -191,22 +239,16 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
 
         private void startTimer(TimerModel timer) {
             String input = etTimeInput.getText().toString();
-            if (input.isEmpty()) {
-                input = "90"; // Default if empty
-            }
-
+            if (input.isEmpty()) input = "90";
+            
             long durationMillis = 0;
             try {
                 int val = Integer.parseInt(input);
                 int unitIdx = spinnerUnit.getSelectedItemPosition();
-                // 0: Seconds, 1: Minutes, 2: Hours
                 if (unitIdx == 0) durationMillis = val * 1000L;
                 else if (unitIdx == 1) durationMillis = val * 60 * 1000L;
                 else if (unitIdx == 2) durationMillis = val * 60 * 60 * 1000L;
-
-            } catch (NumberFormatException e) {
-                return;
-            }
+            } catch (NumberFormatException e) { return; }
 
             if (durationMillis == 0) return;
 
@@ -214,35 +256,90 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             timer.remainingTime = durationMillis;
             timer.endTimeMillis = System.currentTimeMillis() + durationMillis;
             timer.isRunning = true;
+            timer.isPaused = false;
+            timer.isFinished = false;
 
-            // Persist for background accuracy
+            saveState(timer);
+            scheduleAlarm(timer);
+            updateUI(timer);
+        }
+
+        private void pauseTimer(TimerModel timer) {
+            timer.isRunning = false;
+            timer.isPaused = true;
+            // remainingTime is already updated by the ticker's last tick
+            // but we should save it
+            
+            cancelAlarm(timer.index); // No alarm while paused
+            saveState(timer);
+            updateUI(timer);
+        }
+
+        private void resumeTimer(TimerModel timer) {
+            timer.isRunning = true;
+            timer.isPaused = false;
+            timer.endTimeMillis = System.currentTimeMillis() + timer.remainingTime;
+            
+            saveState(timer);
+            scheduleAlarm(timer);
+            updateUI(timer);
+        }
+
+        private void stopTimer(TimerModel timer, boolean isManual) {
+            timer.isRunning = false;
+            timer.isPaused = false;
+            timer.isFinished = false;
+            timer.endTimeMillis = 0;
+            
+            if (isManual) cancelAlarm(timer.index);
+            
+            saveState(timer);
+            updateUI(timer);
+        }
+
+        private void resetTimer(TimerModel timer) {
+            // Reset to Idle
+            timer.isRunning = false;
+            timer.isPaused = false;
+            timer.isFinished = false;
+            saveState(timer);
+            updateUI(timer);
+        }
+        
+        private void finishTimer(TimerModel timer) {
+            timer.isRunning = false;
+            timer.isFinished = true;
+            timer.endTimeMillis = 0;
+            
+            cancelAlarm(timer.index); // Prevent redundant AlarmManager trigger if we are here via CountDownTimer
+
+            if (MainActivity.isAppVisible) {
+                SoundHelper.playRingtone(itemView.getContext());
+            }
+
+            saveState(timer);
+            updateUI(timer);
+        }
+
+        private void saveState(TimerModel timer) {
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
             prefs.edit()
                 .putLong("timer_" + timer.index + "_end_time", timer.endTimeMillis)
                 .putLong("timer_" + timer.index + "_total_time", timer.totalTime)
+                .putLong("timer_" + timer.index + "_remaining", timer.remainingTime)
+                .putBoolean("timer_" + timer.index + "_is_paused", timer.isPaused)
                 .apply();
-
-            // Schedule System Alarm
-            scheduleAlarm(timer);
-
-            // UI Update
-            inputContainer.setVisibility(View.GONE);
-            runningContainer.setVisibility(View.VISIBLE);
-
-            startTicker(timer);
         }
 
         private void scheduleAlarm(TimerModel timer) {
             android.content.Context context = itemView.getContext();
             android.app.AlarmManager alarmManager = (android.app.AlarmManager) context.getSystemService(android.content.Context.ALARM_SERVICE);
-            
             android.content.Intent intent = new android.content.Intent(context, TimerReceiver.class);
             intent.putExtra("timer_index", timer.index);
-            
             android.app.PendingIntent pendingIntent = android.app.PendingIntent.getBroadcast(
                 context, timer.index, intent, android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE
             );
-
+            
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
                 alarmManager.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP, timer.endTimeMillis, pendingIntent);
             } else {
@@ -260,77 +357,45 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             alarmManager.cancel(pendingIntent);
         }
 
+        private void UpdateTickerText(long millisUntilFinished) {
+            long seconds = millisUntilFinished / 1000;
+            long minutes = seconds / 60;
+            long hours = minutes / 60;
+            
+            String timeStr;
+            if (hours > 0) timeStr = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes % 60, seconds % 60);
+            else timeStr = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds % 60);
+            tvCountdown.setText(timeStr);
+        }
+
         private void startTicker(TimerModel timer) {
             if (countDownTimer != null) countDownTimer.cancel();
             
-            // If it was "Restart", set it back to "Start" when ticker runs (if it's not already)
-            btnStartStop.setText(R.string.start);
-
-            // We use the remaining time calculated at bind or start
             countDownTimer = new CountDownTimer(timer.remainingTime, 100) {
                 @Override
                 public void onTick(long millisUntilFinished) {
                     timer.remainingTime = millisUntilFinished;
-                    
-                    // Update Text
-                    long seconds = millisUntilFinished / 1000;
-                    long minutes = seconds / 60;
-                    long hours = minutes / 60;
-                    
-                    String timeStr;
-                    if (hours > 0) timeStr = String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes % 60, seconds % 60);
-                    else timeStr = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds % 60);
-                    
-                    tvCountdown.setText(timeStr);
-
-                    // Update Circle
+                    UpdateTickerText(millisUntilFinished);
                     float progress = (float) millisUntilFinished / timer.totalTime;
                     circleVisualizer.setProgress(progress);
                 }
 
                 @Override
                 public void onFinish() {
-                    stopTimer(timer, false); // Not a manual stop
-                    tvCountdown.setText("Done!");
-                    circleVisualizer.setProgress(0f);
-                    btnStartStop.setText(R.string.restart); // Change to Restart on finish
+                    finishTimer(timer);
                 }
             }.start();
         }
-
-        private void stopTimer(TimerModel timer, boolean isManualStop) {
-            timer.isRunning = false;
-            timer.endTimeMillis = 0;
-            
-            // Clear persistence
-            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
-            prefs.edit().putLong("timer_" + timer.index + "_end_time", 0).apply();
-
-            if (isManualStop) {
-                cancelAlarm(timer.index);
-            }
-
-            if (countDownTimer != null) countDownTimer.cancel();
-            
-            inputContainer.setVisibility(View.VISIBLE);
-            runningContainer.setVisibility(View.GONE);
-            circleVisualizer.setProgress(1.0f);
-            
-            // btnStartStop text usually remains "Start" if stopped manually
-            // But if it was "Restart" from a previous finish, we leave it.
-            // Actually, if we just stopped it, let's keep the current text or reset if needed.
-            // Requirement says "When a timer is finished the button should say 'Restart'".
-        }
     }
 
-
-    // Simple Model to hold state
     static class TimerModel {
         int index;
         long totalTime;
         long remainingTime;
-        long endTimeMillis; // 0 if not running
+        long endTimeMillis;
         boolean isRunning;
+        boolean isPaused;
+        boolean isFinished;
         String inputValue;
         int unitIndex;
     }

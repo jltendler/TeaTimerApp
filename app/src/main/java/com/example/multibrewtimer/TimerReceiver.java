@@ -44,15 +44,6 @@ public class TimerReceiver extends BroadcastReceiver {
     }
 
     private void playRingtone(Context context) {
-        String customUri = android.preference.PreferenceManager.getDefaultSharedPreferences(context)
-                .getString("pref_tone_uri", null);
-        
-        try {
-            Uri soundUri = (customUri != null) ? Uri.parse(customUri) : RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
-            Ringtone r = RingtoneManager.getRingtone(context, soundUri);
-            r.play();
-        } catch (Exception e) {
-            // Silent fallback
-        }
+        SoundHelper.playRingtone(context);
     }
 }
