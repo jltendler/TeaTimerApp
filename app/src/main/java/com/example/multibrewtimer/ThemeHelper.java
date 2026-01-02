@@ -26,8 +26,8 @@ public class ThemeHelper {
 
     // 2: Berry (Purples/Reds)
     private static final int[] BERRY_COLORS = {
-            Color.parseColor("#4a0e4e"), // Deep Plum
-            Color.parseColor("#811756"), // Magenta
+            Color.parseColor("#74207a"), // Deep Plum
+            Color.parseColor("#922366"), // Magenta
             Color.parseColor("#c2185b"), // Dark Pink
             Color.parseColor("#e91e63"), // Pink
             Color.parseColor("#f06292"), // Light Pink
