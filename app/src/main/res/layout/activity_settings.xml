@@ -68,6 +68,19 @@
         android:id="@+id/switchEscalateVolume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Last Used Date"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchShowLastUsed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="32dp"/>
 
     <TextView

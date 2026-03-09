@@ -19,6 +19,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHolder> {
 
@@ -60,7 +62,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         Spinner spinnerUnit;
         Button btnStartStop, btnPause, btnResume, btnReset;
         Button btnMinusRunning, btnPlusRunning;
-        TextView tvCountdown;
+        TextView tvCountdown, tvLastUsed;
         CircleTimerView circleVisualizer;
         LinearLayout inputContainer, runningContainer;
 
@@ -80,6 +82,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             btnPlusRunning = itemView.findViewById(R.id.btnPlusRunning);
 
             tvCountdown = itemView.findViewById(R.id.tvCountdown);
+            tvLastUsed = itemView.findViewById(R.id.tvLastUsed);
             circleVisualizer = itemView.findViewById(R.id.circleVisualizer);
             inputContainer = itemView.findViewById(R.id.inputContainer);
             runningContainer = itemView.findViewById(R.id.runningContainer);
@@ -126,6 +129,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 timer.totalTime = prefs.getLong("timer_" + timer.index + "_total_time", 0);
                 timer.isPaused = prefs.getBoolean("timer_" + timer.index + "_is_paused", false);
                 timer.remainingTime = prefs.getLong("timer_" + timer.index + "_remaining", 0);
+                timer.lastUsedMillis = prefs.getLong("timer_" + timer.index + "_last_used", 0);
 
                 if (timer.isPaused) {
                     // Paused State
@@ -246,6 +250,17 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 
                 if (countDownTimer != null) countDownTimer.cancel();
             }
+            
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+            boolean showLastUsed = prefs.getBoolean("pref_show_last_used", false);
+            
+            if (!timer.isRunning && !timer.isFinished && !timer.isPaused && showLastUsed && timer.lastUsedMillis > 0) {
+                SimpleDateFormat sdf = new SimpleDateFormat("MMM d, h:mm a", Locale.getDefault());
+                tvLastUsed.setText("Last: " + sdf.format(new Date(timer.lastUsedMillis)));
+                tvLastUsed.setVisibility(View.VISIBLE);
+            } else {
+                tvLastUsed.setVisibility(View.GONE);
+            }
         }
 
         private void adjustTime(TimerModel timer, int delta) {
@@ -280,6 +295,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             timer.isRunning = true;
             timer.isPaused = false;
             timer.isFinished = false;
+            timer.lastUsedMillis = System.currentTimeMillis();
 
             saveState(timer);
             scheduleAlarm(timer);
@@ -378,6 +394,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
                 .putLong("timer_" + timer.index + "_total_time", timer.totalTime)
                 .putLong("timer_" + timer.index + "_remaining", timer.remainingTime)
                 .putBoolean("timer_" + timer.index + "_is_paused", timer.isPaused)
+                .putLong("timer_" + timer.index + "_last_used", timer.lastUsedMillis)
                 .apply();
         }
 
@@ -448,5 +465,6 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         boolean isFinished;
         String inputValue;
         int unitIndex;
+        long lastUsedMillis;
     }
 }

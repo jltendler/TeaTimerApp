@@ -129,6 +129,15 @@ public class SettingsActivity extends AppCompatActivity {
         switchEscalateVolume.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("pref_escalate_volume", isChecked).apply();
         });
+
+        // Show Last Used Setting
+        SwitchCompat switchShowLastUsed = findViewById(R.id.switchShowLastUsed);
+        boolean currentShowLastUsed = prefs.getBoolean("pref_show_last_used", false); // Default false
+        switchShowLastUsed.setChecked(currentShowLastUsed);
+
+        switchShowLastUsed.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("pref_show_last_used", isChecked).apply();
+        });
     }
 
     private void updateCurrentSoundDisplay() {
