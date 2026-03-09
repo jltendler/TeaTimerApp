@@ -12,8 +12,15 @@ import android.os.Build;
 import androidx.core.app.NotificationCompat;
 
 public class TimerReceiver extends BroadcastReceiver {
+    public static final String ACTION_DISMISS = "com.example.multibrewtimer.ACTION_DISMISS";
+
     @Override
     public void onReceive(Context context, Intent intent) {
+        if (ACTION_DISMISS.equals(intent.getAction())) {
+            SoundHelper.stopRingtone();
+            return;
+        }
+
         int timerIndex = intent.getIntExtra("timer_index", 0);
         
         // Always play the custom sound manually to ensure exactly one (correct) ring
@@ -29,7 +36,12 @@ public class TimerReceiver extends BroadcastReceiver {
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         
         Intent mainIntent = new Intent(context, MainActivity.class);
+        mainIntent.putExtra("stop_sound", true);
         PendingIntent contentIntent = PendingIntent.getActivity(context, 0, mainIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Intent dismissIntent = new Intent(context, TimerReceiver.class);
+        dismissIntent.setAction(ACTION_DISMISS);
+        PendingIntent deleteIntent = PendingIntent.getBroadcast(context, timerIndex, dismissIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, "TIMER_CHANNEL_SILENT")
                 .setSmallIcon(R.drawable.ic_launcher)
@@ -38,7 +50,8 @@ public class TimerReceiver extends BroadcastReceiver {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setSound(null) // Ensure builder also knows it's silent
-                .setContentIntent(contentIntent);
+                .setContentIntent(contentIntent)
+                .setDeleteIntent(deleteIntent);
 
         notificationManager.notify(timerIndex, builder.build());
     }

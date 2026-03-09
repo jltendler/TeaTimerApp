@@ -22,8 +22,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    protected void onNewIntent(android.content.Intent intent) {
+        super.onNewIntent(intent);
+        checkStopSound(intent);
+    }
+
+    private void checkStopSound(android.content.Intent intent) {
+        if (intent != null && intent.getBooleanExtra("stop_sound", false)) {
+            SoundHelper.stopRingtone();
+            intent.removeExtra("stop_sound"); // Don't trigger on rotation
+        }
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        checkStopSound(getIntent());
         
         // Apply Theme Preference
         int themeMode = android.preference.PreferenceManager.getDefaultSharedPreferences(this)

@@ -20,4 +20,10 @@
         <item>Sunset</item>
         <item>Zen</item>
     </string-array>
+    <string-array name="alert_repeat_counts">
+        <item>1</item>
+        <item>3</item>
+        <item>5</item>
+        <item>10</item>
+    </string-array>
 </resources>

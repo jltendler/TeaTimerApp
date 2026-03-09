@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -97,6 +98,36 @@ public class SettingsActivity extends AppCompatActivity {
 
             prefs.edit().putInt("pref_theme_mode", mode).apply();
             androidx.appcompat.app.AppCompatDelegate.setDefaultNightMode(mode);
+        });
+
+        // Alert Repeat Count Setting
+        android.widget.Spinner spinnerAlertCount = findViewById(R.id.spinnerAlertCount);
+        int currentAlertCount = prefs.getInt("pref_alert_count", 1); // Default 1
+        
+        String[] alertCounts = getResources().getStringArray(R.array.alert_repeat_counts);
+        for(int i=0; i<alertCounts.length; i++) {
+            if(Integer.parseInt(alertCounts[i]) == currentAlertCount) {
+                spinnerAlertCount.setSelection(i);
+                break;
+            }
+        }
+
+        spinnerAlertCount.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, android.view.View view, int position, long id) {
+                int val = Integer.parseInt(alertCounts[position]);
+                prefs.edit().putInt("pref_alert_count", val).apply();
+            }
+            @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+        });
+
+        // Escalate Volume Setting
+        SwitchCompat switchEscalateVolume = findViewById(R.id.switchEscalateVolume);
+        boolean currentEscalateVolume = prefs.getBoolean("pref_escalate_volume", false); // Default false
+        switchEscalateVolume.setChecked(currentEscalateVolume);
+
+        switchEscalateVolume.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("pref_escalate_volume", isChecked).apply();
         });
     }
 

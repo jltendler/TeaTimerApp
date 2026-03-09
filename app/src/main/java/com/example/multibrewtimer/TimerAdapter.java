@@ -324,6 +324,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             timer.isRunning = false;
             timer.isPaused = false;
             timer.isFinished = false;
+            
+            SoundHelper.stopRingtone();
+            
             saveState(timer);
             updateUI(timer);
         }
