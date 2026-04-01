@@ -138,6 +138,28 @@ public class SettingsActivity extends AppCompatActivity {
         switchShowLastUsed.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("pref_show_last_used", isChecked).apply();
         });
+
+        // Show Rank Badge Setting
+        SwitchCompat switchShowRankBadge = findViewById(R.id.switchShowRankBadge);
+        boolean currentShowRankBadge = prefs.getBoolean("pref_show_rank_badge", true); // Default true
+        switchShowRankBadge.setChecked(currentShowRankBadge);
+
+        switchShowRankBadge.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("pref_show_rank_badge", isChecked).apply();
+        });
+
+        // Clear Timestamps
+        Button btnClearTimestamps = findViewById(R.id.btnClearTimestamps);
+        btnClearTimestamps.setOnClickListener(v -> {
+            SharedPreferences.Editor editor = prefs.edit();
+            // Clear for 6 timers
+            for (int i = 0; i < 6; i++) {
+                editor.remove("timer_" + i + "_last_used");
+            }
+            editor.apply();
+            
+            android.widget.Toast.makeText(SettingsActivity.this, "Timestamps Cleared", android.widget.Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void updateCurrentSoundDisplay() {

@@ -57,12 +57,59 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         return timers.size();
     }
 
+    public void refreshTimers() {
+        for (TimerModel timer : timers) {
+            if (!timer.isPaused && timer.endTimeMillis > 0) {
+                if (timer.endTimeMillis > System.currentTimeMillis()) {
+                    timer.isRunning = true;
+                    timer.remainingTime = timer.endTimeMillis - System.currentTimeMillis();
+                    timer.isFinished = false;
+                } else {
+                    timer.isRunning = false;
+                    timer.isFinished = true;
+                    timer.endTimeMillis = 0;
+                }
+            }
+        }
+        notifyItemRangeChanged(0, timers.size(), "full_update");
+    }
+
+    private int getRank(TimerModel currentTimer, android.content.SharedPreferences prefs) {
+        if (currentTimer.lastUsedMillis <= 0) return -1;
+        int rank = 1;
+        for (TimerModel t : timers) {
+            long tLastUsed = prefs.getLong("timer_" + t.index + "_last_used", 0);
+            if (tLastUsed > currentTimer.lastUsedMillis) {
+                rank++;
+            } else if (tLastUsed == currentTimer.lastUsedMillis && t != currentTimer) {
+                if (t.index < currentTimer.index) {
+                    rank++;
+                }
+            }
+        }
+        return rank;
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull TimerViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (payloads.contains("rank_update")) {
+            holder.updateRankBadge(timers.get(position));
+        } else if (payloads.contains("full_update")) {
+            TimerModel timer = timers.get(position);
+            holder.refreshColors(timer);
+            holder.updateUI(timer);
+            holder.updateRankBadge(timer);
+        } else {
+            super.onBindViewHolder(holder, position, payloads);
+        }
+    }
+
     class TimerViewHolder extends RecyclerView.ViewHolder {
         EditText etTimeInput;
         Spinner spinnerUnit;
         Button btnStartStop, btnPause, btnResume, btnReset;
         Button btnMinusRunning, btnPlusRunning;
-        TextView tvCountdown, tvLastUsed;
+        TextView tvCountdown, tvLastUsed, tvRankBadge;
         CircleTimerView circleVisualizer;
         LinearLayout inputContainer, runningContainer;
 
@@ -83,6 +130,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
 
             tvCountdown = itemView.findViewById(R.id.tvCountdown);
             tvLastUsed = itemView.findViewById(R.id.tvLastUsed);
+            tvRankBadge = itemView.findViewById(R.id.tvRankBadge);
             circleVisualizer = itemView.findViewById(R.id.circleVisualizer);
             inputContainer = itemView.findViewById(R.id.inputContainer);
             runningContainer = itemView.findViewById(R.id.runningContainer);
@@ -91,27 +139,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         void bind(TimerModel timer) {
             android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
             
-            // Theme Logic
-            int themeIndex = prefs.getInt("pref_timer_theme", 0);
-            int resolvedColor = ThemeHelper.getColor(themeIndex, timer.index % 6);
-            
-            circleVisualizer.setColor(resolvedColor);
-            
-            Button btnPlus = itemView.findViewById(R.id.btnPlus);
-            Button btnMinus = itemView.findViewById(R.id.btnMinus);
-            
-            android.content.res.ColorStateList csl = android.content.res.ColorStateList.valueOf(resolvedColor);
-            btnStartStop.setBackgroundTintList(csl);
-            btnPause.setBackgroundTintList(csl);
-            btnResume.setBackgroundTintList(csl);
-            btnReset.setBackgroundTintList(csl);
-            btnPlus.setBackgroundTintList(csl);
-            btnMinus.setBackgroundTintList(csl);
-            btnPlusRunning.setBackgroundTintList(csl);
-            btnMinusRunning.setBackgroundTintList(csl);
-
-            tvCountdown.setTextColor(resolvedColor);
-            etTimeInput.setTextColor(resolvedColor);
+            refreshColors(timer);
 
             // Restore State
             if (timer.inputValue == null) {
@@ -155,6 +183,7 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             }
 
             updateUI(timer);
+            updateRankBadge(timer);
 
             // Input Listeners
             if (timer.inputValue != null) etTimeInput.setText(timer.inputValue);
@@ -169,6 +198,8 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             });
             
             int incrementStep = prefs.getInt("pref_increment_step", 5);
+            Button btnPlus = itemView.findViewById(R.id.btnPlus);
+            Button btnMinus = itemView.findViewById(R.id.btnMinus);
             btnPlus.setOnClickListener(v -> adjustTime(timer, incrementStep));
             btnMinus.setOnClickListener(v -> adjustTime(timer, -incrementStep));
             
@@ -191,6 +222,48 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             int adjustStep = prefs.getInt("pref_increment_step", 5);
             btnPlusRunning.setOnClickListener(v -> adjustRemainingTime(timer, adjustStep));
             btnMinusRunning.setOnClickListener(v -> adjustRemainingTime(timer, -adjustStep));
+        }
+
+        void updateRankBadge(TimerModel timer) {
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+            boolean showRankBadge = prefs.getBoolean("pref_show_rank_badge", true);
+            
+            if (!showRankBadge) {
+                tvRankBadge.setVisibility(View.GONE);
+                return;
+            }
+
+            int rank = getRank(timer, prefs);
+            if (rank > 0) {
+                tvRankBadge.setText(String.valueOf(rank));
+                tvRankBadge.setVisibility(View.VISIBLE);
+            } else {
+                tvRankBadge.setVisibility(View.GONE);
+            }
+        }
+
+        void refreshColors(TimerModel timer) {
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(itemView.getContext());
+            int themeIndex = prefs.getInt("pref_timer_theme", 0);
+            int resolvedColor = ThemeHelper.getColor(themeIndex, timer.index % 6);
+            
+            circleVisualizer.setColor(resolvedColor);
+            
+            Button btnPlus = itemView.findViewById(R.id.btnPlus);
+            Button btnMinus = itemView.findViewById(R.id.btnMinus);
+            
+            android.content.res.ColorStateList csl = android.content.res.ColorStateList.valueOf(resolvedColor);
+            btnStartStop.setBackgroundTintList(csl);
+            btnPause.setBackgroundTintList(csl);
+            btnResume.setBackgroundTintList(csl);
+            btnReset.setBackgroundTintList(csl);
+            btnPlus.setBackgroundTintList(csl);
+            btnMinus.setBackgroundTintList(csl);
+            btnPlusRunning.setBackgroundTintList(csl);
+            btnMinusRunning.setBackgroundTintList(csl);
+
+            tvCountdown.setTextColor(resolvedColor);
+            etTimeInput.setTextColor(resolvedColor);
         }
 
         private void updateUI(TimerModel timer) {
@@ -300,6 +373,8 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             saveState(timer);
             scheduleAlarm(timer);
             updateUI(timer);
+            updateRankBadge(timer);
+            TimerAdapter.this.notifyItemRangeChanged(0, timers.size(), "rank_update");
         }
 
         private void pauseTimer(TimerModel timer) {
@@ -340,7 +415,9 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
             timer.isRunning = false;
             timer.isPaused = false;
             timer.isFinished = false;
+            timer.endTimeMillis = 0;
             
+            cancelAlarm(timer.index);
             SoundHelper.stopRingtone();
             
             saveState(timer);

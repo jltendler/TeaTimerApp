@@ -8,6 +8,7 @@ import androidx.recyclerview.widget.RecyclerView;
 public class MainActivity extends AppCompatActivity {
 
     public static boolean isAppVisible = false;
+    private TimerAdapter adapter;
 
     @Override
     protected void onStart() {
@@ -57,8 +58,16 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new GridLayoutManager(this, 2));
         recyclerView.setItemViewCacheSize(10); // Keep all 9 timers in memory to avoid recycling issues
         
-        TimerAdapter adapter = new TimerAdapter();
-        recyclerView.setAdapter(new TimerAdapter(6));
+        adapter = new TimerAdapter(6);
+        recyclerView.setAdapter(adapter);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (adapter != null) {
+            adapter.refreshTimers();
+        }
     }
 
     private void createNotificationChannel() {

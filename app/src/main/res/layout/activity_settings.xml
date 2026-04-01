@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
-    android:gravity="center_horizontal">
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:gravity="center_horizontal">
 
     <TextView
         android:layout_width="wrap_content"
@@ -12,7 +17,7 @@
         android:text="Timer Sound"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:id="@+id/tvCurrentSound"
@@ -20,14 +25,14 @@
         android:layout_height="wrap_content"
         android:text="Default Beep"
         android:textSize="18sp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <Button
         android:id="@+id/btnPickSound"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Choose Sound" 
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -41,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/increment_steps" 
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -55,7 +60,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/alert_repeat_counts"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -68,12 +73,12 @@
         android:id="@+id/switchEscalateVolume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Show Last Used Date"
+        android:text="Show Last Used Timestamp"
         android:textSize="18sp"
         android:layout_marginBottom="8dp"/>
 
@@ -81,7 +86,28 @@
         android:id="@+id/switchShowLastUsed"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Last Used Badge"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp"/>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchShowRankBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="12dp"/>
+        
+    <Button
+        android:id="@+id/btnClearTimestamps"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Clear Last Used Timestamps"
+        android:layout_marginTop="0dp"
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -95,7 +121,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:entries="@array/timer_themes"
-        android:layout_marginBottom="32dp"/>
+        android:layout_marginBottom="12dp"/>
 
     <TextView
         android:layout_width="wrap_content"
@@ -130,4 +156,5 @@
             android:text="Dark" />
     </RadioGroup>
 
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>
