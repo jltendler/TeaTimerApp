@@ -17,4 +17,22 @@
         tools:listitem="@layout/item_timer" 
         android:padding="8dp"/>
 
+    <FrameLayout
+        android:id="@+id/pipContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?attr/colorSurface"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvPipCountdown"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="00:00"
+            android:textSize="64sp"
+            android:textStyle="bold"
+            android:textColor="?attr/colorPrimary"/>
+    </FrameLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

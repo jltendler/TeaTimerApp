@@ -70,6 +70,85 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private android.os.CountDownTimer pipTimer;
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        if (!prefs.getBoolean("pref_enable_pip", false)) return;
+
+        if (adapter != null) {
+            TimerAdapter.TimerModel soonest = adapter.getSoonestEndingTimer();
+            if (soonest != null) {
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                    android.app.PictureInPictureParams params = new android.app.PictureInPictureParams.Builder()
+                            .setAspectRatio(new android.util.Rational(16, 9))
+                            .build();
+                    enterPictureInPictureMode(params);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode, android.content.res.Configuration newConfig) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+        
+        androidx.recyclerview.widget.RecyclerView recyclerView = findViewById(R.id.recyclerViewTimers);
+        android.view.View pipContainer = findViewById(R.id.pipContainer);
+        android.widget.TextView tvPipCountdown = findViewById(R.id.tvPipCountdown);
+
+        if (isInPictureInPictureMode) {
+            recyclerView.setVisibility(android.view.View.GONE);
+            pipContainer.setVisibility(android.view.View.VISIBLE);
+            
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().hide();
+            }
+
+            TimerAdapter.TimerModel soonest = adapter.getSoonestEndingTimer();
+            if (soonest != null) {
+                long remaining = soonest.endTimeMillis - System.currentTimeMillis();
+                if (pipTimer != null) pipTimer.cancel();
+                pipTimer = new android.os.CountDownTimer(remaining, 100) {
+                    @Override
+                    public void onTick(long millisUntilFinished) {
+                        long seconds = millisUntilFinished / 1000;
+                        long minutes = seconds / 60;
+                        long hours = minutes / 60;
+                        
+                        String timeStr;
+                        if (hours > 0) timeStr = String.format(java.util.Locale.getDefault(), "%02d:%02d:%02d", hours, minutes % 60, seconds % 60);
+                        else timeStr = String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds % 60);
+                        tvPipCountdown.setText(timeStr);
+                    }
+
+                    @Override
+                    public void onFinish() {
+                        tvPipCountdown.setText("Done");
+                    }
+                }.start();
+            }
+        } else {
+            recyclerView.setVisibility(android.view.View.VISIBLE);
+            pipContainer.setVisibility(android.view.View.GONE);
+            
+            if (getSupportActionBar() != null) {
+                getSupportActionBar().show();
+            }
+
+            if (pipTimer != null) {
+                pipTimer.cancel();
+                pipTimer = null;
+            }
+            
+            if (adapter != null) {
+                adapter.refreshTimers();
+            }
+        }
+    }
+
     private void createNotificationChannel() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             // Channel with sound disabled so we can play custom sound manually without double-ringing

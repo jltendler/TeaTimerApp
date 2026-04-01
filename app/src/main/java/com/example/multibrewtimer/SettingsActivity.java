@@ -148,6 +148,15 @@ public class SettingsActivity extends AppCompatActivity {
             prefs.edit().putBoolean("pref_show_rank_badge", isChecked).apply();
         });
 
+        // Enable Timer Overlay (PIP) Setting
+        SwitchCompat switchEnablePip = findViewById(R.id.switchEnablePip);
+        boolean currentEnablePip = prefs.getBoolean("pref_enable_pip", false); // Default false
+        switchEnablePip.setChecked(currentEnablePip);
+
+        switchEnablePip.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("pref_enable_pip", isChecked).apply();
+        });
+
         // Clear Timestamps
         Button btnClearTimestamps = findViewById(R.id.btnClearTimestamps);
         btnClearTimestamps.setOnClickListener(v -> {

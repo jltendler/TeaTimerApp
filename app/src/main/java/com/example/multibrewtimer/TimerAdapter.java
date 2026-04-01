@@ -57,6 +57,18 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         return timers.size();
     }
 
+    public TimerModel getSoonestEndingTimer() {
+        TimerModel soonest = null;
+        for (TimerModel timer : timers) {
+            if (timer.isRunning && timer.endTimeMillis > System.currentTimeMillis()) {
+                if (soonest == null || timer.endTimeMillis < soonest.endTimeMillis) {
+                    soonest = timer;
+                }
+            }
+        }
+        return soonest;
+    }
+
     public void refreshTimers() {
         for (TimerModel timer : timers) {
             if (!timer.isPaused && timer.endTimeMillis > 0) {
