@@ -69,8 +69,10 @@ public class TimerAdapter extends RecyclerView.Adapter<TimerAdapter.TimerViewHol
         return soonest;
     }
 
-    public void refreshTimers() {
+    public void refreshTimers(android.content.Context context) {
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(context);
         for (TimerModel timer : timers) {
+            timer.lastUsedMillis = prefs.getLong("timer_" + timer.index + "_last_used", 0);
             if (!timer.isPaused && timer.endTimeMillis > 0) {
                 if (timer.endTimeMillis > System.currentTimeMillis()) {
                     timer.isRunning = true;

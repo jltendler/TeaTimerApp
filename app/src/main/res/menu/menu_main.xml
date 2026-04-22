@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/action_clear_timestamps"
+        android:title="Clear Timestamps"
+        android:icon="@drawable/ic_clear_timestamps"
+        app:showAsAction="ifRoom" />
+    <item
         android:id="@+id/action_settings"
         android:title="Settings"
         app:showAsAction="ifRoom" />

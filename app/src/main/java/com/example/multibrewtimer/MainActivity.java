@@ -66,8 +66,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         if (adapter != null) {
-            adapter.refreshTimers();
+            adapter.refreshTimers(this);
         }
+        invalidateOptionsMenu();
     }
 
     private android.os.CountDownTimer pipTimer;
@@ -144,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
             }
             
             if (adapter != null) {
-                adapter.refreshTimers();
+                adapter.refreshTimers(this);
             }
         }
     }
@@ -180,9 +181,32 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(android.view.Menu menu) {
+        android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        boolean showLastUsed = prefs.getBoolean("pref_show_last_used", false);
+        boolean showClearIcon = prefs.getBoolean("pref_show_clear_icon", false);
+        
+        android.view.MenuItem clearItem = menu.findItem(R.id.action_clear_timestamps);
+        if (clearItem != null) {
+            clearItem.setVisible(showLastUsed && showClearIcon);
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(android.view.MenuItem item) {
         if (item.getItemId() == R.id.action_settings) {
             startActivity(new android.content.Intent(this, SettingsActivity.class));
+            return true;
+        } else if (item.getItemId() == R.id.action_clear_timestamps) {
+            android.content.SharedPreferences prefs = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+            android.content.SharedPreferences.Editor editor = prefs.edit();
+            for (int i = 0; i < 6; i++) {
+                editor.remove("timer_" + i + "_last_used");
+            }
+            editor.apply();
+            if (adapter != null) adapter.refreshTimers(this);
+            android.widget.Toast.makeText(this, "Timestamps Cleared", android.widget.Toast.LENGTH_SHORT).show();
             return true;
         }
         return super.onOptionsItemSelected(item);

@@ -132,11 +132,28 @@ public class SettingsActivity extends AppCompatActivity {
 
         // Show Last Used Setting
         SwitchCompat switchShowLastUsed = findViewById(R.id.switchShowLastUsed);
+        SwitchCompat switchShowClearIcon = findViewById(R.id.switchShowClearIcon);
+        
         boolean currentShowLastUsed = prefs.getBoolean("pref_show_last_used", false); // Default false
+        boolean currentShowClearIcon = prefs.getBoolean("pref_show_clear_icon", false); // Default false
+        
         switchShowLastUsed.setChecked(currentShowLastUsed);
+        switchShowClearIcon.setChecked(currentShowClearIcon);
+        
+        switchShowClearIcon.setEnabled(currentShowLastUsed);
+        if (!currentShowLastUsed) switchShowClearIcon.setAlpha(0.5f);
+        else switchShowClearIcon.setAlpha(1.0f);
 
         switchShowLastUsed.setOnCheckedChangeListener((buttonView, isChecked) -> {
             prefs.edit().putBoolean("pref_show_last_used", isChecked).apply();
+            
+            switchShowClearIcon.setEnabled(isChecked);
+            if (!isChecked) switchShowClearIcon.setAlpha(0.5f);
+            else switchShowClearIcon.setAlpha(1.0f);
+        });
+
+        switchShowClearIcon.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            prefs.edit().putBoolean("pref_show_clear_icon", isChecked).apply();
         });
 
         // Show Rank Badge Setting
